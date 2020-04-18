@@ -20,5 +20,5 @@ module.exports = (ctx) => (req, resp) => {
 
     // ctx.db.newItemScan(req.param.id, )
 
-    resp.redirect(302, config.itemUrl + req.param.id);
+    resp.redirect(302, ctx.itemUrl + req.param.id);
 };
