@@ -3,5 +3,9 @@
     "@google-cloud/datastore": "^5.1.0",
     "etlogger": "^0.0.3",
     "express": "^4.17.1"
+  },
+  "cloud-repo-tools": {
+    "requiresKeyFile": true,
+    "requiresProjectId": true
   }
 }

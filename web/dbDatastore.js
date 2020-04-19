@@ -22,7 +22,7 @@ class DatastoreDB extends db {
             throw new Error("Invalid item id");
         }
 
-        const scanKey = datastore.key(["Item". datastore.int(itemId), "Scan"]);
+        const scanKey = datastore.key(["Item", datastore.int(itemId), "Scan"]);
 
         const data = {
             ...values,
@@ -31,9 +31,9 @@ class DatastoreDB extends db {
 
         await datastore.save({ key: scanKey, data });
 
-        Log.info("Saved scan with id ", key.id);
+        Log.info("Saved scan with id ", scanKey.id);
 
-        return key.id;
+        return scanKey.id;
     }
 };
 
