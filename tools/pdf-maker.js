@@ -4,6 +4,8 @@ const { program } = require("commander");
 
 const PdfPrinter = require("pdfmake");
 
+const codecFactory = require("../web/codec");
+
 function myParseInt(value, dummy) {
     return parseInt(value);
 }
@@ -13,38 +15,133 @@ program
     .option("-o, --out <path>", "output filename", "labels.pdf")
     .option("-s, --start <number>", "starting asset number", myParseInt, 10001)
     .option("-p, --pages <number>", "number of pages to generate", myParseInt, 1)
+    .option("-c, --codec <name>", "name of codec to encrypt ids with", "plain")
+    .option("-k, --key <secret>", "secret key for id encryption", "secret")
+    .option("-u, --url <base>", "base url ids will be appended to", "HTTP://ITEM.EXAMPLE.COM/")
+    .option("-l, --logo <filename>", "filename of svg logo file", "./logo.svg")
+    .option("-t, --template <name>", "name of template to use", "5523")
+    .option("-i, --instruction <instruction>", "instruction text", "Scan this QR code with a phone to update this item's location.")
 
 program.parse(process.argv);
 
+const codec = codecFactory({ name: program.codec, key: program.key });
 
 let logo = false;
 try {
-    logo = fs.readFileSync("./logo.svg", "utf8");
+    logo = fs.readFileSync(program.logo, "utf8");
 } catch (e) {
-    console.warn(`Unable to load logo from ./logo.svg :  ${e.message}`);
+    console.warn(`Unable to load logo from ${program.logo} :  ${e.message}`);
 }
 
 // In points
 const logoWidth = 72;
 const logoHeight = 12;
 
-// In the future we'll have other label template
+const templates = {
 
-// For Avery 5523 WeatherProof 2"x4" Labels
-const template = {
-    columns: 2,
-    columnGap: 13.55,
+    // Avery 5523 WeatherProof 2"x4" Labels
+    "5523": {
+        columns: 2,
+        columnGap: 13.55,
 
-    headerMargin: 36,
-    rowsPerPage: 5,
+        headerMargin: 36,
+        rowsPerPage: 5,
 
-    labelWidth: 288,
-    labelHeight: 144,
+        labelWidth: 288,
+        labelHeight: 144,
 
-    pageWidth: 612,
-    pageHeight: 792,
+        pageWidth: 612,
+        pageHeight: 792,
+
+        label: () => ({
+            columns: [
+                {
+                    stack: [
+                        {
+                            svg: logo,
+                            fit: [120, 30],
+                        },
+                        {
+                            text: `Item # ${nextId}`,
+                            margin: [0, 8, 0, 0],
+                        },
+                        {
+                            text: program.instruction,
+                            margin: [0, 8, 0, 0],
+                            lineHeight: 1.4,
+                        },
+                    ],
+                    margin: [32, 32, 0, 0],
+                },
+                {
+                    width: "30%",
+                    margin: [0, 32, 0, 0],
+                    qr: `${program.url}${codec.encode(nextId)}`,
+                    eccLevel: 'Q',
+                    fit: template.labelWidth / 3,
+                }
+            ],
+                columnGap: 10,
+        }),
+    },
+
+    // Avery 5195 Return address labels
+    "5195": {
+        columns: 4,
+        columnGap: 21.6,
+
+        headerMargin: 39.6,
+        rowsPerPage: 15,
+
+        labelWidth: 126,
+        labelHeight: 48,
+
+        pageWidth: 612,
+        pageHeight: 792,
+
+        label: () => ({
+            columns: [
+                {
+                    stack: [
+                        {
+                            svg: logo,
+                            fit: [60, 13],
+                            alignment: "center",
+                        },
+                        {
+                            text: `Item # ${nextId}`,
+                            margin: [0, 6, 0, 0],
+                            fontSize: 9,
+                            alignment: "center",
+                        },
+                    ],
+                    margin: [8, 8, 0, 0],
+                },
+                {
+                    width: "30%",
+                    margin: [0, 4, 0, 0],
+                    qr: `${program.url}${codec.encode(nextId)}`,
+                    eccLevel: 'L',
+                    fit: template.labelHeight - 10,
+                    alignment: "center",
+                }
+            ],
+                columnGap: 10,
+        }),
+    },
 };
 
+if (program.template === "big") program.template = "5523";
+if (program.template === "small") program.template = "5195";
+
+const template = templates[program.template];
+
+if (!template) {
+    console.error(`Unknown template ${program.template}`);
+    process.exit(-1);
+}
+
+/////////////
 
 const contentWidth = (template.labelWidth * template.columns) +
     (template.columnGap * (template.columns - 1));
@@ -74,45 +171,6 @@ const doc = {
 /////////
 
 let nextId = program.start;
-const instruction = "Please scan this QR code regularly to update the location of this item."
-
-function label() {
-    const out = {
-        columns: [
-            {
-                stack: [
-                    {
-                        svg: logo,
-                        fit: [120, 30],
-                    },
-                    {
-                        text: `Item # ${nextId}`,
-                        margin: [0, 8, 0, 0],
-                    },
-                    {
-                        text: instruction,
-                        margin: [0, 8, 0, 0],
-                        lineHeight: 1.4,
-                    },
-                ],
-                margin: [32, 32, 0, 0],
-            },
-            {
-                width: "30%",
-                margin: [0, 32, 0, 0],
-                qr: `HTTPS://ITEM.RENEGADE.BIO/A/${nextId}`,
-                eccLevel: 'L',
-                fit: template.labelWidth / 4,
-                align: "center",
-            }
-        ],
-        columnGap: 10,
-    };
-
-    nextId += 1;
-    return out;
-}
-
 
 function addPage(pageNum) {
     const pageTable = {
@@ -140,7 +198,8 @@ function addPage(pageNum) {
         const row = [];
 
         for(let col = 0; col < template.columns; col += 1) {
-            row.push(label());
+            row.push(template.label());
+            nextId += 1;
 
             if (col + 1 < template.columns) {
                 row.push(""); // empty text for the gap
@@ -188,3 +247,7 @@ const printer = new PdfPrinter(fonts);
 const pdfDoc = printer.createPdfKitDocument(doc);
 pdfDoc.pipe(fs.createWriteStream(program.out));
 pdfDoc.end();
+
+console.log(program.out);
+console.log(`${program.pages} pages, ${program.pages * template.columns * template.rowsPerPage } labels`);
+console.log(`[${program.start} to ${nextId - 1}]`);

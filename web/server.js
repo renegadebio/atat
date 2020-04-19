@@ -3,28 +3,35 @@ const Log = require("etlogger");
 const express = require("express");
 
 const ConfigLoader = require("./configLoader");
+const DbFactory = require("./dbFactory");
 
 const loader = new ConfigLoader({
     port: 3000,
 
-    itemUrl: "https://items.renegade.bio/itemScan/",
+    itemUrl: "/scan/",
 });
 
 loader.tryLoadFromJSONFileSync("./config.json");
 loader.loadFromEnv();
 loader.logConfig();
 
-const config = loader.values;
+const context = loader.values;
+
+///////
+
+context.db = DbFactory(context);
+
+
+///////
 
 const app = express();
 
 const itemScan = require("./item-scan");
 
-const itemScanHandler = itemScan(config);
+app.get("/a/:encid", itemScan(context));
 
-app.get("/a/:id", itemScanHandler);
-app.get("/A/:id", itemScanHandler);
+const port = process.env.PORT || context.port;
 
-app.listen(config.port, () => {
-    Log.info(`Listening on port ${config.port}`);
+app.listen(port, () => {
+    Log.info(`Listening on port ${port}`);
 });
