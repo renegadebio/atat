@@ -31,9 +31,12 @@ module.exports = (ctx) => {
             return;
         }
 
-        // Don't need to await for this
+        // Go ahead and let them be redirected
+        resp.redirect(302, ctx.itemUrl + itemId);
+
+        // But we're going to do the save in the background
         try {
-            ctx.db.newItemScan(itemId, {
+            const scanId = await ctx.db.newItemScan(itemId, {
                 country: headers["x-appengine-country"],
                 city: headers["x-appengine-city"],
                 region: headers["x-appengine-region"],
@@ -41,12 +44,12 @@ module.exports = (ctx) => {
                 ip: headers["x-appengine-user-ip"],
                 userAgent: headers["user-agent"],
             });
-        } catch (e) {
-            Log.error("Saving newItemScan ", e);
-        }
 
-        resp.status(200).send({ id: itemId, headers: req.headers });
-        // resp.redirect(302, ctx.itemUrl + req.params.id);
+            Log.info("Scan id is ", scanId);
+        } catch (e) {
+            Log.logErrorObj("While saving newItemScan", e);
+        }
+        // resp.status(200).send({ id: itemId, headers: req.headers });
     };
 };
 

@@ -5,10 +5,15 @@ const express = require("express");
 const ConfigLoader = require("./configLoader");
 const DbFactory = require("./dbFactory");
 
+const itemScan = require("./itemScan");
+const scanned = require("./scanned");
+
+////////
+
 const loader = new ConfigLoader({
     port: 3000,
 
-    itemUrl: "/scan/",
+    itemUrl: "/scanned/",
 });
 
 loader.tryLoadFromJSONFileSync("./config.json");
@@ -26,10 +31,13 @@ context.db = DbFactory(context);
 
 const app = express();
 
-const itemScan = require("./itemScan");
 
 app.get("/a/:encid", itemScan(context));
 
+app.get("/scanned/:id", scanned(context));
+
+
+///////
 const port = process.env.PORT || context.port;
 
 app.listen(port, () => {
