@@ -74,8 +74,16 @@ class ConfigLoader {
         }
     }
 
-    logConfig() {
-        Log.infoi("config = ", this.values);
+    logConfig(redact = []) {
+        const toLog = {
+            ...this.values,
+        };
+
+        redact.forEach((k) => {
+            toLog[k] = "<< REDACTED >>";
+        })
+
+        Log.infoi("config = ", toLog);
     }
 }
 

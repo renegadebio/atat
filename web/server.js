@@ -13,7 +13,7 @@ const loader = new ConfigLoader({
 
 loader.tryLoadFromJSONFileSync("./config.json");
 loader.loadFromEnv();
-loader.logConfig();
+loader.logConfig(["codecKey"]);
 
 const context = loader.values;
 
@@ -26,7 +26,7 @@ context.db = DbFactory(context);
 
 const app = express();
 
-const itemScan = require("./item-scan");
+const itemScan = require("./itemScan");
 
 app.get("/a/:encid", itemScan(context));
 

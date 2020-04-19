@@ -1,6 +1,6 @@
 const Log = require("etlogger");
 
-const codecFactory = require("codec");
+const codecFactory = require("./codec");
 /**
  * The idea behind the item scan is that we want to capture that you hit this
  * url and whatever data we can record right now, but we don't want to leave
