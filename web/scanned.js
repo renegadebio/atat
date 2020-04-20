@@ -1,23 +1,34 @@
 module.exports = (ctx) => (req, resp) => {
     resp.status(200)
         .send(`<html>
-<title>Item # ${req.id}</title>
-<body>
-<h1>Cool!</h1>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.4, maximum-scale=3.0, minimum-scale=0.86">
+    <title>Item # ${req.id}</title>
+<style>
+dt {
+    margin-top: 2rem;
+    font-weight: 600;
+}
+</style>
+</head>
+<body style="font-family: helvetica, sans-serif;">
 
-<p>You've scanned item # ${req.params.id}</p>
+<div style="margin: auto; max-width: 300px;">
 
-<p>Here's where google thinks you are:</p>
+    <div style="text-align:center; margin: 2rem 0 2rem 0; font-size:1.3rem;">Item #</div>
 
-<blockquote>
-    <dl>
-        <dt>City</dt>
-        <dd>${req.headers["x-appengine-city"]}</dd>
+    <h1 style="text-align:center;">${req.params.id}</h1>
 
-        <dt>Region</dt>
-        <dd>${req.headers["x-appengine-region"]}</dd>
-    </dl>
-</blockquote>
+    <blockquote style="margin-top: 2rem;">
+        <dl>
+            <dt>City</dt>
+            <dd>${req.headers["x-appengine-city"]}</dd>
+
+            <dt>Region</dt>
+            <dd>${req.headers["x-appengine-region"]}</dd>
+        </dl>
+    </blockquote>
+</div>
 </body>
 </html>`)
 }
