@@ -2,7 +2,7 @@ module.exports = (ctx) => (req, resp) => {
     resp.status(200)
         .send(`<html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.4, maximum-scale=3.0, minimum-scale=0.86">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>Item # ${req.id}</title>
 <style>
 dt {
